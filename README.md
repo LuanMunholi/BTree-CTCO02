@@ -1,3 +1,4 @@
+# ! WORK IN PROGRESS !
 # BTree CTCO02 - Implementação do algoritmo de ordenação B-Tree.
 
 Este repositório contém implementações do algoritmo de ordenação B-Tree em linguagem C para fins de benchmarking.
@@ -8,7 +9,7 @@ Ciência da Computação - UNIFEI
 
 ## Algoritmo Implementado
 
-1. **B-Tree**: Ordena a lista selecionando repetidamente o menor elemento da lista não ordenada e movendo-o para o início.
+1. **B-Tree**: [descrever...]
 
 ## Uso
 
@@ -31,6 +32,6 @@ Ciência da Computação - UNIFEI
    
 ## Benchmark
 
-As saídas são imprimidas na tela automaticamente com os valores do número de comparações, trocas e o tempo de execução.
+[descrever...]
 
 --- 
