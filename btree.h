@@ -33,5 +33,6 @@ void insere(BTree *arvore, ArquivoIndex *chave);
 ArquivoIndex* busca(noArvore *no, int chave);
 void leTodosIndices(const char *nomeArquivo);
 void leArquivo(const char *nomeArquivo, int *count);
+int buscaNaBTree(BTree *arvore, const char *chave);  // Adicione este protótipo
 
 #endif // TRAB_2_BTREE_H

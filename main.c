@@ -1,48 +1,78 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "btree.c"
+#include <time.h>
+#include "btree.h"
+#include "busca_direta.h"
+
+#define NUM_BUSCAS 30
+#define CHAVE_TAMANHO 6
+#define MAX_CHAVE 99999
+
+// Função para medir o tempo de execução
+double medirTempoBusca(int (*func)(const char *, const char *), const char *nomeArquivo, const char *chave) {
+    clock_t inicio, fim;
+    inicio = clock();
+    func(nomeArquivo, chave);
+    fim = clock();
+    return (double)(fim - inicio) / CLOCKS_PER_SEC;
+}
+
+void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
+    double temposDireto[NUM_BUSCAS];
+    double temposBTree[NUM_BUSCAS];
+    double somaDireto = 0.0;
+    double somaBTree = 0.0;
+    double maxDireto = 0.0;
+    double minDireto = 1.0;
+    double maxBTree = 0.0;
+    double minBTree = 1.0;
+
+    srand(time(NULL));
+
+    for (int i = 0; i < NUM_BUSCAS; i++) {
+        char chave[CHAVE_TAMANHO];
+        sprintf(chave, "%05d", rand() % MAX_CHAVE + 1);
+
+        temposDireto[i] = medirTempoBusca(buscaDiretaNoArquivo, nomeArquivo, chave);
+        temposBTree[i] = medirTempoBusca((int (*)(const char *, const char *))buscaNaBTree, (const char *)arvore, chave);
+
+        somaDireto += temposDireto[i];
+        somaBTree += temposBTree[i];
+
+        if (temposDireto[i] > maxDireto) maxDireto = temposDireto[i];
+        if (temposDireto[i] < minDireto) minDireto = temposDireto[i];
+
+        if (temposBTree[i] > maxBTree) maxBTree = temposBTree[i];
+        if (temposBTree[i] < minBTree) minBTree = temposBTree[i];
+    }
+
+    double mediaDireto = somaDireto / NUM_BUSCAS;
+    double mediaBTree = somaBTree / NUM_BUSCAS;
+
+    printf("Busca Direta:\n");
+    printf("Média: %f segundos\n", mediaDireto);
+    printf("Máximo: %f segundos\n", maxDireto);
+    printf("Mínimo: %f segundos\n", minDireto);
+
+    printf("\nBusca B-Tree:\n");
+    printf("Média: %f segundos\n", mediaBTree);
+    printf("Máximo: %f segundos\n", maxBTree);
+    printf("Mínimo: %f segundos\n", minBTree);
+}
 
 int main() {
-  BTree *tree = criaBTree();
-  //array com todods os registros. linha do txt = registros[i+1]
-  Registro *registros;
-  int count_registros;
+    const char *nomeArquivo = "dados.txt";
 
-  //inicializando pre-processamento da carga.
-  //Pode ser melhorado no futuro caso
-  //seja descoberto um meio melhor de fazer acesso
-  //direto por linha no .txt
-  leArquivo("entrada.txt", &registros, &count_registros);
+    // Criar B-Tree e carregar o arquivo (implementação de exemplo, ajuste conforme necessário)
+    BTree *arvore = criaBTree();
+    int count;
+    leArquivo(nomeArquivo, &count);
 
-  //Printando todas as linhas pra verificar
-  for (int i = 0; i < count_registros; i++) {
-    printf("Index: %d, Nome: %s, ID: %d, IsActive: %d\n", registros[i].index,
-           registros[i].nome, registros[i].id, registros[i].isActive);
-  }
+    // Realizar buscas e medir o tempo
+    realizarBuscas(nomeArquivo, arvore);
 
-  for(int i=0; i<count_registros; i++){
-    ArquivoIndex *fp1 = (ArquivoIndex *)malloc(sizeof(struct ArquivoIndex));
-    fp1->index = registros[i].index;
-    fp1->line = i+1;
-    printf("insere: %d - %d\n", fp1->index, fp1->line);
-    insere(tree, fp1);
-  }
+    // Liberar memória da B-Tree (implementar função de destruição conforme necessário)
+    // destruirBTree(arvore);
 
-  //Buscar um index na Btree
-  int indiceProcurado = 299;
-  ArquivoIndex *resultado = busca(tree->raiz, indiceProcurado);
-
-  if (resultado != NULL) {
-    int line = resultado->line;
-    printf("Encontrou index %d na linha %d\n", resultado->index, line);
-    printf("Recuperando data da linha %d:\n [index] %d\n [nome] %s\n [id] %d\n [isActive] %d\n", line, registros[line-1].index, registros[line-1].nome, registros[line-1].id, registros[line-1].isActive);
-  } else {
-    printf("Indice %d não encontrado\n", indiceProcurado);
-  }
-
-  //Liberar memoria alocada
-  free(registros);
-  return 0;
-
+    return 0;
 }

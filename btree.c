@@ -160,3 +160,11 @@ void leArquivo(const char *nomeArquivo, int *count) {
 
     fclose(arquivo);
 }
+
+// Função para buscar uma chave utilizando a B-Tree
+int buscaNaBTree(BTree *arvore, const char *chave) {
+    int chaveInt = atoi(chave);  // Convertendo a chave para inteiro
+    ArquivoIndex *resultado = busca(arvore->raiz, chaveInt);
+
+    return resultado != NULL ? 1 : 0;  // Retorna 1 se a chave foi encontrada, caso contrário, 0
+}   
