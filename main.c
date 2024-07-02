@@ -8,6 +8,15 @@
 #define CHAVE_TAMANHO 6
 #define MAX_CHAVE 99999  // Definição do valor máximo para a chave
 
+// Função para medir o tempo de execução
+double medirTempoBusca(int (*func)(const char *, const char *), const char *nomeArquivo, const char *chave) {
+    clock_t inicio, fim;
+    inicio = clock();
+    func(nomeArquivo, chave);
+    fim = clock();
+    return (double)(fim - inicio) / CLOCKS_PER_SEC;
+}
+
 void criarIndice(BTree *arvore, const char *nomeArquivo) {
     int count;
     leArquivo(nomeArquivo, &count);
