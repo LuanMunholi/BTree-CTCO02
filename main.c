@@ -6,26 +6,46 @@
 
 #define NUM_BUSCAS 30
 #define CHAVE_TAMANHO 6
-#define MAX_CHAVE 99999
+#define MAX_CHAVE 99999  // Definição do valor máximo para a chave
 
-// Função para medir o tempo de execução
-double medirTempoBusca(int (*func)(const char *, const char *), const char *nomeArquivo, const char *chave) {
-    clock_t inicio, fim;
-    inicio = clock();
-    func(nomeArquivo, chave);
-    fim = clock();
-    return (double)(fim - inicio) / CLOCKS_PER_SEC;
+void criarIndice(BTree *arvore, const char *nomeArquivo) {
+    int count;
+    leArquivo(nomeArquivo, &count);
+    printf("Índice criado com sucesso.\n");
+}
+
+void procurarElemento(BTree *arvore, const char *nomeArquivo) {
+    char chave[CHAVE_TAMANHO];
+    printf("Digite a chave a ser buscada: ");
+    scanf("%s", chave);
+
+    // Busca na B-Tree
+    int encontradoBTree = buscaNaBTree(arvore, chave);
+    if (encontradoBTree) {
+        printf("Chave %s encontrada na B-Tree.\n", chave);
+    } else {
+        printf("Chave %s não encontrada na B-Tree.\n", chave);
+    }
+
+    // Busca direta no arquivo
+    int encontradoDireto = buscaDiretaNoArquivo(nomeArquivo, chave);
+    if (encontradoDireto) {
+        printf("Chave %s encontrada no arquivo.\n", chave);
+    } else {
+        printf("Chave %s não encontrada no arquivo.\n", chave);
+    }
+}
+
+void removerRegistro(BTree *arvore) {
+    printf("Remoção de registro ainda não implementada.\n");
 }
 
 void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
     double temposDireto[NUM_BUSCAS];
     double temposBTree[NUM_BUSCAS];
-    double somaDireto = 0.0;
-    double somaBTree = 0.0;
-    double maxDireto = 0.0;
-    double minDireto = 1.0;
-    double maxBTree = 0.0;
-    double minBTree = 1.0;
+    double somaDireto = 0.0, somaBTree = 0.0;
+    double maxDireto = 0.0, minDireto = 1.0;
+    double maxBTree = 0.0, minBTree = 1.0;
 
     srand(time(NULL));
 
@@ -62,14 +82,39 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
 
 int main() {
     const char *nomeArquivo = "dados.txt";
-
-    // Criar B-Tree e carregar o arquivo (implementação de exemplo, ajuste conforme necessário)
     BTree *arvore = criaBTree();
-    int count;
-    leArquivo(nomeArquivo, &count);
 
-    // Realizar buscas e medir o tempo
-    realizarBuscas(nomeArquivo, arvore);
+    int opcao;
+    do {
+        printf("\nMenu\n");
+        printf("1. Criar índice\n");
+        printf("2. Procurar elementos\n");
+        printf("3. Remover registro\n");
+        printf("4. Realizar testes de buscas com medição de tempo\n");
+        printf("5. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                criarIndice(arvore, nomeArquivo);
+                break;
+            case 2:
+                procurarElemento(arvore, nomeArquivo);
+                break;
+            case 3:
+                removerRegistro(arvore);
+                break;
+            case 4:
+                realizarBuscas(nomeArquivo, arvore);
+                break;
+            case 5:
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opção inválida. Tente novamente.\n");
+        }
+    } while (opcao != 5);
 
     // Liberar memória da B-Tree (implementar função de destruição conforme necessário)
     // destruirBTree(arvore);
