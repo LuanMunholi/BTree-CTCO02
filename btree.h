@@ -1,42 +1,37 @@
 #ifndef TRAB_2_BTREE_H
 #define TRAB_2_BTREE_H
-#define MAX_NAME_LENGTH 21
-#define T 2
 
-// Estrutura que simulara um registro do .txt
-typedef struct Registro{
-  int index;
-  char nome[MAX_NAME_LENGTH];
-  int id;
-  int isActive;
-} Registro;
+#include <stdbool.h>
 
-// Estrutura ArquivoIndex
-typedef struct ArquivoIndex{
-  int index;
-  int line;
+#define T 3  // Define a ordem mínima da árvore B (T > 1)
+
+// Estrutura para armazenar o índice e a linha no arquivo
+typedef struct {
+    int chave;
+    int linha;
 } ArquivoIndex;
 
-// Estrutura de um no da arvore B
+// Estrutura de um nó da árvore B
 typedef struct noArvore {
-  ArquivoIndex* arquivoIndex[2*T-1];    //array de ponteiros para ArquivoIndex
-  struct noArvore* filho[2*T];          //array de ponteiros para filhos
-  int n;                                //numero de chaves armazenadas no nó
-  bool folha;                           //indica se o nó é uma folha
+    ArquivoIndex* chaves[2 * T - 1];  // Array de ponteiros para ArquivoIndex
+    struct noArvore* filhos[2 * T];   // Array de ponteiros para filhos
+    int numChaves;                    // Número de chaves armazenadas no nó
+    bool folha;                       // Indica se o nó é uma folha
 } noArvore;
 
 // Estrutura da árvore B
-typedef struct BTree{
-  noArvore* raiz;
+typedef struct {
+    noArvore* raiz;
 } BTree;
 
-struct noArvore* criaNo(bool folha);
-struct BTree* criaBTree();
+// Funções para manipulação da árvore B
+noArvore* criaNo(bool folha);
+BTree* criaBTree();
 void divideFilho(noArvore *no, int i, noArvore *noFilho);
 void insereNaoCheio(noArvore *no, ArquivoIndex *chave);
-void insere(BTree *tree, ArquivoIndex *chave);
-struct ArquivoIndex* busca(noArvore *no, int chave);
+void insere(BTree *arvore, ArquivoIndex *chave);
+ArquivoIndex* busca(noArvore *no, int chave);
 void leTodosIndices(const char *nomeArquivo);
-void leArquivo(const char *nomeArquivo, Registro **registros, int *count);
+void leArquivo(const char *nomeArquivo, int *count);
 
-#endif //TRAB_2_BTREE_H
+#endif // TRAB_2_BTREE_H

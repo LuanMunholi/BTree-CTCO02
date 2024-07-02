@@ -1,183 +1,162 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "btree.h"
 
-//Grau minimo (a ordem da arvore eh 2T - 1)
-#define T 2 
-//tamanho do nome do .txt: 20 characters + 1 for the null terminator
-#define MAX_NAME_LENGTH 21
-
-//criar um novo no da arvoire B
-struct noArvore *criaNo(bool folha) {
-  noArvore *novoNo = (noArvore *)malloc(sizeof(noArvore));
-  novoNo->folha = folha;
-  novoNo->n = 0;
-  for (int i = 0; i < 2 * T; i++) {
-    novoNo->filho[i] = NULL;
-  }
-  return novoNo;
+// Cria um novo nó da árvore B
+noArvore* criaNo(bool folha) {
+    noArvore* no = (noArvore*)malloc(sizeof(noArvore));
+    no->folha = folha;
+    no->numChaves = 0;
+    for (int i = 0; i < 2 * T - 1; i++) {
+        no->chaves[i] = NULL;
+    }
+    for (int i = 0; i < 2 * T; i++) {
+        no->filhos[i] = NULL;
+    }
+    return no;
 }
 
-//criar uma nova arvore B
-BTree *criaBTree() {
-  BTree *tree = (BTree*)malloc(sizeof(BTree));
-  tree->raiz = criaNo(true);
-  return tree;
+// Cria uma nova árvore B
+BTree* criaBTree() {
+    BTree* arvore = (BTree*)malloc(sizeof(BTree));
+    arvore->raiz = criaNo(true);
+    return arvore;
 }
 
-//dividir o filho y do no x em dois nos
+// Divide o filho noFilho de no na posição i
 void divideFilho(noArvore *no, int i, noArvore *noFilho) {
-  noArvore *novoNo = criaNo(noFilho->folha);
-  novoNo->n = T - 1;
+    noArvore* novoNo = criaNo(noFilho->folha);
+    novoNo->numChaves = T - 1;
 
-  for (int j = 0; j < T - 1; j++) {
-    novoNo->arquivoIndex[j] = noFilho->arquivoIndex[j + T];
-  }
-
-  if (!noFilho->folha) {
-    for (int j = 0; j < T; j++) {
-      novoNo->filho[j] = noFilho->filho[j + T];
+    // Copia as chaves do noFilho para o novoNo
+    for (int j = 0; j < T - 1; j++) {
+        novoNo->chaves[j] = noFilho->chaves[j + T];
     }
-  }
 
-  noFilho->n = T - 1;
+    // Se noFilho não for folha, copia os filhos
+    if (!noFilho->folha) {
+        for (int j = 0; j < T; j++) {
+            novoNo->filhos[j] = noFilho->filhos[j + T];
+        }
+    }
 
-  for (int j = no->n; j >= i + 1; j--) {
-    no->filho[j + 1] = no->filho[j];
-  }
+    noFilho->numChaves = T - 1;
 
-  no->filho[i + 1] = novoNo;
+    // Cria espaço para o novo filho em no
+    for (int j = no->numChaves; j >= i + 1; j--) {
+        no->filhos[j + 1] = no->filhos[j];
+    }
 
-  for (int j = no->n - 1; j >= i; j--) {
-    no->arquivoIndex[j + 1] = no->arquivoIndex[j];
-  }
+    no->filhos[i + 1] = novoNo;
 
-  no->arquivoIndex[i] = noFilho->arquivoIndex[T - 1];
-  no->n += 1;
+    // Move as chaves em no para dar espaço para a nova chave
+    for (int j = no->numChaves - 1; j >= i; j--) {
+        no->chaves[j + 1] = no->chaves[j];
+    }
+
+    no->chaves[i] = noFilho->chaves[T - 1];
+    no->numChaves++;
 }
 
-//inserir uma nova chave no nó nao cheio
+// Insere uma chave em um nó que não está cheio
 void insereNaoCheio(noArvore *no, ArquivoIndex *chave) {
-  int i = no->n - 1;
+    int i = no->numChaves - 1;
 
-  if (no->folha) {
-    while (i >= 0 && chave->index < no->arquivoIndex[i]->index) {
-      no->arquivoIndex[i + 1] = no->arquivoIndex[i];
-      i--;
-    }
+    if (no->folha) {
+        // Move as chaves maiores para frente
+        while (i >= 0 && chave->chave < no->chaves[i]->chave) {
+            no->chaves[i + 1] = no->chaves[i];
+            i--;
+        }
 
-    no->arquivoIndex[i + 1] = chave;
-    no->n += 1;
-  } else {
-    while (i >= 0 && chave->index < no->arquivoIndex[i]->index) {
-      i--;
-    }
-    i++;
-
-    if (no->filho[i]->n == 2 * T - 1) {
-      divideFilho(no, i, no->filho[i]);
-
-      if (chave->index > no->arquivoIndex[i]->index) {
+        no->chaves[i + 1] = chave;
+        no->numChaves++;
+    } else {
+        // Encontra o filho que receberá a nova chave
+        while (i >= 0 && chave->chave < no->chaves[i]->chave) {
+            i--;
+        }
         i++;
-      }
+
+        // Se o filho está cheio, divida-o
+        if (no->filhos[i]->numChaves == 2 * T - 1) {
+            divideFilho(no, i, no->filhos[i]);
+
+            // Depois de dividir, a nova chave está em no->chaves[i]
+            if (chave->chave > no->chaves[i]->chave) {
+                i++;
+            }
+        }
+
+        insereNaoCheio(no->filhos[i], chave);
     }
-    insereNaoCheio(no->filho[i], chave);
-  }
 }
 
-//inserir uma nova chave na arvore B
-void insere(BTree *tree, ArquivoIndex *chave) {
-  noArvore *r = tree->raiz;
+// Insere uma chave na árvore B
+void insere(BTree *arvore, ArquivoIndex *chave) {
+    noArvore* raiz = arvore->raiz;
 
-  if (r->n == 2 * T - 1) {
-    noArvore *novoNo = criaNo(false);
-    tree->raiz = novoNo;
-    novoNo->filho[0] = r;
-    divideFilho(novoNo, 0, r);
-    insereNaoCheio(novoNo, chave);
-  } else {
-    insereNaoCheio(r, chave);
-  }
+    if (raiz->numChaves == 2 * T - 1) {
+        noArvore* novoNo = criaNo(false);
+        arvore->raiz = novoNo;
+        novoNo->filhos[0] = raiz;
+
+        divideFilho(novoNo, 0, raiz);
+
+        insereNaoCheio(novoNo, chave);
+    } else {
+        insereNaoCheio(raiz, chave);
+    }
 }
 
-//buscar uma chave na arvore B
-ArquivoIndex *busca(noArvore *no, int chave) {
-  int i = 0;
+// Busca uma chave na árvore B
+ArquivoIndex* busca(noArvore *no, int chave) {
+    int i = 0;
+    while (i < no->numChaves && chave > no->chaves[i]->chave) {
+        i++;
+    }
 
-  while (i < no->n && chave > no->arquivoIndex[i]->index) {
-    i++;
-  }
+    if (i < no->numChaves && chave == no->chaves[i]->chave) {
+        return no->chaves[i];
+    }
 
-  if (i < no->n && chave == no->arquivoIndex[i]->index) {
-    return no->arquivoIndex[i];
-  }
-
-  if (no->folha) {
-    return NULL;
-  } else {
-    return busca(no->filho[i], chave);
-  }
+    if (no->folha) {
+        return NULL;
+    } else {
+        return busca(no->filhos[i], chave);
+    }
 }
 
-//funcao para ler todos inteiros do index (primeiro item de cada linha)
+// Lê todos os índices de um arquivo (simulação)
 void leTodosIndices(const char *nomeArquivo) {
-  FILE *file = fopen(nomeArquivo, "r");
-  if (file == NULL) {
-    perror("Erro ao abrir o arquivo");
-    exit(EXIT_FAILURE);
-  }
-
-  int number;
-  char line[256];
-  int line_number = 1;
-
-  // Leitura linha por linha
-  while (fgets(line, sizeof(line), file)) {
-    // Tenta ler um número inteiro no início da linha
-    if (sscanf(line, "%d", &number) == 1) {
-      printf("Linha %d: %d\n", line_number, number);
+    FILE *arquivo = fopen(nomeArquivo, "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return;
     }
-    line_number++;
-  }
 
-  fclose(file);
+    char linha[256];
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        printf("%s", linha);
+    }
+
+    fclose(arquivo);
 }
 
-//carrega os dados do arquivo para a memória RAM através de um vetor auxiliar chamado Registros
-void leArquivo(const char *nomeArquivo, Registro **registros, int *count) {
-  FILE *file = fopen(nomeArquivo, "r");
-  if (file == NULL) {
-    perror("Erro ao abrir arquivo");
-    exit(EXIT_FAILURE);
-  }
-
-  // Tamanho inicial dos arrays de registro
-  int size = 10;
-  *registros = (Registro *)malloc(size * sizeof(Registro));
-  if (*registros == NULL) {
-    perror("Erro ao alocal memória");
-    fclose(file);
-    exit(EXIT_FAILURE);
-  }
-
-  *count = 0;
-  while (fscanf(file, "%d %20s %d %d", &(*registros)[*count].index,
-                (*registros)[*count].nome, &(*registros)[*count].id,
-                &(*registros)[*count].isActive) == 4) {
-    (*count)++;
-
-    // Realoca memória, se necessário
-    if (*count >= size) {
-      size *= 2;
-      *registros = (Registro *)realloc(*registros, size * sizeof(Registro));
-      if (*registros == NULL) {
-        perror("Error reallocating memory");
-        fclose(file);
-        exit(EXIT_FAILURE);
-      }
+// Lê o arquivo e conta os registros (simulação)
+void leArquivo(const char *nomeArquivo, int *count) {
+    FILE *arquivo = fopen(nomeArquivo, "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return;
     }
-  }
 
-  fclose(file);
+    char linha[256];
+    *count = 0;
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        (*count)++;
+    }
+
+    fclose(arquivo);
 }
