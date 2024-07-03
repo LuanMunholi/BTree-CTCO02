@@ -7,7 +7,7 @@
 
 #define CHAVE_TAMANHO 6     // Definição do tamanho máximo para a chave
 #define NUM_ATRIBUTOS 4     // Definição do número máximo de atributos no arquivo
-#define MAX_CHAVE 99999     // Definição do valor máximo para a chave
+#define MAX_CHAVE 9999      // Definição do valor máximo para a chave
 #define NUM_REGISTRO 10000  // Definição do valor máximo de registros
 #define NUM_BUSCAS 30       // Definição do número de buscas realizadas no teste
 
