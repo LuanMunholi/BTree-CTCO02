@@ -4,6 +4,23 @@
 #include <string.h>
 #include "btree.h"
 
+typedef struct ArquivoIndex {
+    char chave[6]; // Utilizamos uma string para armazenar os 5 caracteres da chave
+    int linha;
+}ArquivoIndex;
+
+typedef struct BTreeNode {
+    int numChaves;
+    ArquivoIndex *chaves;
+    struct BTreeNode **filhos;
+    int folha;
+}BTreeNode;
+
+typedef struct BTree {
+    BTreeNode *raiz;
+    int ordem;
+}BTree;
+
 
 BTreeNode* criaNo(int ordem, int folha) {
     BTreeNode *novoNo = (BTreeNode*)malloc(sizeof(BTreeNode));
@@ -381,4 +398,16 @@ void removeChaveRecursivo(BTreeNode *no, const char *chave, int ordem) {
 
 void removeChave(BTree *arvore, const char *chave) {
     removeChaveRecursivo(arvore->raiz, chave, arvore->ordem);
+}
+
+BTreeNode* getRaiz(BTree *arvore) {
+    return arvore->raiz;
+}
+
+int getLinha(BTreeNode *no, int indice) {
+    if (no == NULL || indice < 0 || indice >= no->numChaves) {
+        printf("Índice inválido ou nó nulo.\n");
+        return -1;
+    }
+    return no->chaves[indice].linha;
 }

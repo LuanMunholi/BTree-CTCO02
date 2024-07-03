@@ -1,22 +1,11 @@
 #ifndef TRAB_2_BTREE_H
 #define TRAB_2_BTREE_H
 
-typedef struct ArquivoIndex {
-    char chave[6]; // Utilizamos uma string para armazenar os 5 caracteres da chave
-    int linha;
-} ArquivoIndex;
+typedef struct ArquivoIndex ArquivoIndex;
 
-typedef struct BTreeNode {
-    int numChaves;
-    ArquivoIndex *chaves;
-    struct BTreeNode **filhos;
-    int folha;
-} BTreeNode;
+typedef struct BTreeNode BTreeNode;
 
-typedef struct BTree {
-    BTreeNode *raiz;
-    int ordem;
-} BTree;
+typedef struct BTree BTree;
 
 BTreeNode* criaNo(int ordem, int folha);
 
@@ -40,9 +29,12 @@ void imprimeBTreeRecursivo(BTreeNode *no, int nivel, int ordem);
 
 void imprimeBTree(BTree *arvore);
 
-
 void removeChaveRecursivo(BTreeNode *no, const char *chave, int ordem);
 
 void removeChave(BTree *arvore, const char *chave);
+
+BTreeNode* getRaiz(BTree *arvore);
+
+int getLinha(BTreeNode *no, int indice);
 
 #endif // TRAB_2_BTREE_H

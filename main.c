@@ -63,9 +63,9 @@ void procurarElemento(BTree *arvore, const char *nomeArquivo) {
     int indice;
 
     // Busca na B-Tree
-    BTreeNode *encontradoBTree = buscaNaBtree(arvore->raiz, chave, &indice);
+    BTreeNode *encontradoBTree = buscaNaBtree(getRaiz(arvore), chave, &indice);
     if (encontradoBTree != NULL) {
-        printf("Chave encontrada na linha: %d\n", encontradoBTree->chaves[indice].linha);
+        printf("Chave encontrada na linha: %d\n", getLinha(encontradoBTree, indice));
         printf("Chave %s encontrada na B-Tree.\n", chave);
     } else {
         printf("Chave %s não encontrada na B-Tree.\n", chave);
@@ -111,7 +111,7 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
         
         // Medindo o tempo de execução de uma busca na B-Tree
         inicio = clock();
-        buscaNaBtree(arvore->raiz, chave, &indice);
+        buscaNaBtree(getRaiz(arvore), chave, &indice);
         fim = clock();
         temposBTree[i] = (double)(fim - inicio) / CLOCKS_PER_SEC;
 
