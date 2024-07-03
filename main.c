@@ -11,6 +11,10 @@
 #define NUM_REGISTRO 10000  // Definição do valor máximo de registros
 #define NUM_BUSCAS 30       // Definição do número de buscas realizadas no teste
 
+void imprimeArvore(BTree *arvore){
+    imprimeBTree(arvore);
+}
+
 void geraRegistroAleatorio(Registro *registro, int chave) {
     sprintf(registro->chave, "%05d", chave);  // Formata a chave com 5 dígitos
     sprintf(registro->atributo2, "Atributo2_%d", rand() % 1000);
@@ -156,7 +160,8 @@ int main() {
         printf("3. Procurar elementos\n");
         printf("4. Remover registro\n");
         printf("5. Realizar testes de buscas com medicao de tempo\n");
-        printf("6. Sair\n");
+        printf("6. Imprimir Arvore\n");
+        printf("7. Sair\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
@@ -177,6 +182,9 @@ int main() {
                 realizarBuscas(nomeArquivo, arvore);
                 break;
             case 6:
+                imprimeArvore(arvore);
+                break;
+            case 7:
                 printf("Saindo...\n");
                 break;
             default:
