@@ -18,39 +18,38 @@ void geraRegistroAleatorio(Registro *registro, int chave) {
     sprintf(registro->atributo4, "Atributo4_%d", rand() % 1000);
 }
 
-void geraDadosAleatorios(const char *nomeArquivo, int numRegistros, int maxChave) {
+void embaralhaArray(int *array, int tamanho) {
+    for (int i = 0; i < tamanho; i++) {
+        int j = rand() % tamanho;
+        int temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
+
+void geraDadosAleatorios(const char *nomeArquivo, int numRegistros) {
+    int chaves[NUM_REGISTRO];
+    for (int i = 1; i <= NUM_REGISTRO; i++) {
+        chaves[i] = i;
+    }
+
+    // Embaralha o array de chaves
+    embaralhaArray(chaves, NUM_REGISTRO);
+
     FILE *arquivo = fopen(nomeArquivo, "w");
     if (arquivo == NULL) {
         printf("Erro ao criar o arquivo.\n");
         return;
     }
 
-    srand(time(NULL));
-    int *chavesUsadas = (int *)calloc(maxChave + 1, sizeof(int));
-    if (chavesUsadas == NULL) {
-        printf("Erro ao alocar memória.\n");
-        fclose(arquivo);
-        return;
-    }
-
+    Registro registro;
     for (int i = 0; i < numRegistros; i++) {
-        Registro registro;
-        int chave;
-
-        do {
-            chave = rand() % maxChave + 1;
-        } while (chavesUsadas[chave] == 1);
-
-        chavesUsadas[chave] = 1;
-        geraRegistroAleatorio(&registro, chave);
-
+        geraRegistroAleatorio(&registro, chaves[i]);
         fprintf(arquivo, "%s,%s,%s,%s\n", registro.chave, registro.atributo2, registro.atributo3, registro.atributo4);
     }
 
-    free(chavesUsadas);
     fclose(arquivo);
-    printf("Arquivo gerado com sucesso: %s\n", nomeArquivo);
-}
+} 
 
 void criarIndice(BTree *arvore, const char *nomeArquivo) {    
     insereDoArquivo(arvore,nomeArquivo);
@@ -102,7 +101,7 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
 
     for (int i = 0; i < NUM_BUSCAS; i++) {
         char chave[CHAVE_TAMANHO];
-        sprintf(chave, "%05d", rand() % MAX_CHAVE + 1);
+        sprintf(chave, "%05d", rand() % MAX_CHAVE);
 
         // Função para medir o tempo de execução de uma busca direta no arquivo
         inicio = clock();
@@ -130,14 +129,14 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
     double mediaBTree = somaBTree / NUM_BUSCAS;
 
     printf("Busca Direta:\n");
-    printf("Média: %f segundos\n", mediaDireto);
-    printf("Máximo: %f segundos\n", maxDireto);
-    printf("Mínimo: %f segundos\n", minDireto);
+    printf("Media: %f segundos\n", mediaDireto);
+    printf("Maximo: %f segundos\n", maxDireto);
+    printf("Minimo: %f segundos\n", minDireto);
 
     printf("\nBusca B-Tree:\n");
-    printf("Média: %f segundos\n", mediaBTree);
-    printf("Máximo: %f segundos\n", maxBTree);
-    printf("Mínimo: %f segundos\n", minBTree);
+    printf("Media: %f segundos\n", mediaBTree);
+    printf("Maximo: %f segundos\n", maxBTree);
+    printf("Minimo: %f segundos\n", minBTree);
 }
 
 int main() {
@@ -152,18 +151,18 @@ int main() {
     int opcao;
     do {
         printf("\nMenu\n");
-        printf("1. Gerar dados aleatórios\n");
-        printf("2. Criar índice\n");
+        printf("1. Gerar dados aleatorios\n");
+        printf("2. Criar indice\n");
         printf("3. Procurar elementos\n");
         printf("4. Remover registro\n");
-        printf("5. Realizar testes de buscas com medição de tempo\n");
+        printf("5. Realizar testes de buscas com medicao de tempo\n");
         printf("6. Sair\n");
-        printf("Escolha uma opção: ");
+        printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
             case 1:
-                geraDadosAleatorios(nomeArquivo, NUM_REGISTRO, MAX_CHAVE);
+                geraDadosAleatorios(nomeArquivo, NUM_REGISTRO);
                 break;
             case 2:
                 criarIndice(arvore, nomeArquivo);
