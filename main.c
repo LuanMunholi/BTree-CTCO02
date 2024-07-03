@@ -52,18 +52,21 @@ void geraDadosAleatorios(const char *nomeArquivo, int numRegistros, int maxChave
     printf("Arquivo gerado com sucesso: %s\n", nomeArquivo);
 }
 
-void criarIndice(BTree *arvore, const char *nomeArquivo) {
-    leArquivo(nomeArquivo, arvore);
+void criarIndice(BTree *arvore, const char *nomeArquivo) {    
+    insereDoArquivo(arvore,nomeArquivo);
 }
 
 void procurarElemento(BTree *arvore, const char *nomeArquivo) {
     char chave[CHAVE_TAMANHO];
-    printf("Digite a chave a ser buscada: ");
+    printf("Digite a chave de 5 digitos a ser buscada: ");
     scanf("%s", chave);
+    chave[CHAVE_TAMANHO-1] = '\0';
+    int indice;
 
     // Busca na B-Tree
-    int encontradoBTree = buscaNaBTree(arvore, chave);
-    if (encontradoBTree) {
+    BTreeNode *encontradoBTree = busca(arvore->raiz, chave, &indice);
+    if (encontradoBTree != NULL) {
+        printf("Chave encontrada na linha: %d\n", encontradoBTree->chaves[indice].linha);
         printf("Chave %s encontrada na B-Tree.\n", chave);
     } else {
         printf("Chave %s não encontrada na B-Tree.\n", chave);
@@ -93,9 +96,10 @@ double medirTempoBusca(int (*func)(const char *, const char *), const char *nome
 
 // Função para medir o tempo de execução de uma busca na B-Tree
 double medirTempoBuscaBTree(int (*func)(BTree *, const char *), BTree *arvore, const char *chave) {
+    int indice;
     clock_t inicio, fim;
     inicio = clock();
-    func(arvore, chave);
+    func(arvore->raiz, chave, &indice);
     fim = clock();
     return (double)(fim - inicio) / CLOCKS_PER_SEC;
 }
@@ -114,7 +118,7 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
         sprintf(chave, "%05d", rand() % MAX_CHAVE + 1);
 
         temposDireto[i] = medirTempoBusca(buscaDiretaNoArquivo, nomeArquivo, chave);
-        temposBTree[i] = medirTempoBuscaBTree(buscaNaBTree, arvore, chave);
+        temposBTree[i] = medirTempoBuscaBTree(busca, arvore, chave);
 
         somaDireto += temposDireto[i];
         somaBTree += temposBTree[i];
@@ -142,7 +146,12 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
 
 int main() {
     const char *nomeArquivo = "dados.txt";
-    BTree *arvore = criaBTree();
+    int ordem;
+
+    printf("Inicializando a Btree\n");
+    printf("Digite a ordem da Btree:");
+    scanf("%d", &ordem);
+    BTree *arvore = criaBTree(ordem/2);
 
     int opcao;
     do {

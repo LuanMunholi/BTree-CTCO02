@@ -1,22 +1,41 @@
 #ifndef TRAB_2_BTREE_H
 #define TRAB_2_BTREE_H
 
-#include <stdbool.h>
+typedef struct ArquivoIndex {
+    char chave[6]; // Utilizamos uma string para armazenar os 5 caracteres da chave
+    int linha;
+} ArquivoIndex;
 
-#define T 3  // Define a ordem mínima da árvore B (T > 1)
+typedef struct BTreeNode {
+    int numChaves;
+    ArquivoIndex *chaves;
+    struct BTreeNode **filhos;
+    int folha;
+} BTreeNode;
 
-typedef struct ArquivoIndex ArquivoIndex;
-typedef struct noArvore noArvore;
-typedef struct BTree BTree;
+typedef struct BTree {
+    BTreeNode *raiz;
+    int ordem;
+} BTree;
 
-// Funções para manipulação da árvore B
-noArvore* criaNo(bool folha);
-BTree* criaBTree();
-void divideFilho(noArvore *no, int i, noArvore *noFilho);
-void insereNaoCheio(noArvore *no, ArquivoIndex *chave);
+BTreeNode* criaNo(int ordem, int folha);
+
+BTree* criaBTree(int ordem);
+BTreeNode* busca(BTreeNode *no, const char *chave, int *indice);
+
+void divideNo(BTreeNode *pai, int i, BTreeNode *cheio, int ordem);
+
+void insereNaoCheio(BTreeNode *no, ArquivoIndex *chave, int ordem);
+
 void insere(BTree *arvore, ArquivoIndex *chave);
-ArquivoIndex* busca(noArvore *no, int chave);
-void leArquivo(const char *nomeArquivo, BTree *arvore);
-int buscaNaBTree(BTree *arvore, const char *chave);  // Adicione este protótipo
+
+void insereDoArquivo(BTree *arvore, const char *nomeArquivo);
+
+void imprimeEspacos(int numEspacos);
+
+void imprimeChaves(BTreeNode *no);
+void imprimeBTreeRecursivo(BTreeNode *no, int nivel, int ordem);
+
+void imprimeBTree(BTree *arvore);
 
 #endif // TRAB_2_BTREE_H

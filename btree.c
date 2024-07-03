@@ -1,194 +1,175 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include "btree.h"
 
-// Estrutura para armazenar o índice e a linha no arquivo
-typedef struct ArquivoIndex {
-    int chave;
-    int linha;
-} ArquivoIndex;
 
-// Estrutura de um nó da árvore B
-typedef struct noArvore {
-    ArquivoIndex* chaves[2 * T - 1];  // Array de ponteiros para ArquivoIndex
-    struct noArvore* filhos[2 * T];   // Array de ponteiros para filhos
-    int numChaves;                    // Número de chaves armazenadas no nó
-    bool folha;                       // Indica se o nó é uma folha
-} noArvore;
-
-// Estrutura da árvore B
-typedef struct BTree {
-    noArvore* raiz;
-} BTree;
-
-// Cria um novo nó da árvore B
-noArvore* criaNo(bool folha) {
-    noArvore* no = (noArvore*)malloc(sizeof(noArvore));
-    if (no == NULL) {
-        perror("Erro ao alocar memória para novo nó");
-        exit(EXIT_FAILURE);
-    }
-
-    no->folha = folha;
-    no->numChaves = 0;
-    for (int i = 0; i < 2 * T - 1; i++) {
-        no->chaves[i] = NULL;
-    }
-    for (int i = 0; i < 2 * T; i++) {
-        no->filhos[i] = NULL;
-    }
-    return no;
+BTreeNode* criaNo(int ordem, int folha) {
+    BTreeNode *novoNo = (BTreeNode*)malloc(sizeof(BTreeNode));
+    novoNo->chaves = (ArquivoIndex*)malloc((2 * ordem - 1) * sizeof(ArquivoIndex));
+    novoNo->filhos = (BTreeNode**)malloc(2 * ordem * sizeof(BTreeNode*));
+    novoNo->numChaves = 0;
+    novoNo->folha = folha;
+    return novoNo;
 }
 
-// Cria uma nova árvore B
-BTree* criaBTree() {
-    BTree* arvore = (BTree*)malloc(sizeof(BTree));
-    if (arvore == NULL) {
-        perror("Erro ao alocar memória para nova B-Tree");
-        exit(EXIT_FAILURE);
-    }
-
-    arvore->raiz = criaNo(true);
-    return arvore;
+BTree* criaBTree(int ordem) {
+    BTree *novaArvore = (BTree*)malloc(sizeof(BTree));
+    novaArvore->ordem = ordem;
+    novaArvore->raiz = criaNo(ordem, 1);
+    return novaArvore;
 }
 
-// Divide o filho noFilho de no na posição i
-void divideFilho(noArvore *no, int i, noArvore *noFilho) {
-    noArvore* novoNo = criaNo(noFilho->folha);
-    novoNo->numChaves = T - 1;
-
-    // Copia as chaves do noFilho para o novoNo
-    for (int j = 0; j < T - 1; j++) {
-        novoNo->chaves[j] = noFilho->chaves[j + T];
-    }
-
-    // Se noFilho não for folha, copia os filhos
-    if (!noFilho->folha) {
-        for (int j = 0; j < T; j++) {
-            novoNo->filhos[j] = noFilho->filhos[j + T];
-        }
-    }
-
-    noFilho->numChaves = T - 1;
-
-    // Cria espaço para o novo filho em no
-    for (int j = no->numChaves; j >= i + 1; j--) {
-        no->filhos[j + 1] = no->filhos[j];
-    }
-
-    no->filhos[i + 1] = novoNo;
-
-    // Move as chaves em no para dar espaço para a nova chave
-    for (int j = no->numChaves - 1; j >= i; j--) {
-        no->chaves[j + 1] = no->chaves[j];
-    }
-
-    no->chaves[i] = noFilho->chaves[T - 1];
-    no->numChaves++;
-}
-
-// Insere uma chave em um nó que não está cheio
-void insereNaoCheio(noArvore *no, ArquivoIndex *chave) {
-    int i = no->numChaves - 1;
-
-    if (no->folha) {
-        // Move as chaves maiores para frente
-        while (i >= 0 && chave->chave < no->chaves[i]->chave) {
-            no->chaves[i + 1] = no->chaves[i];
-            i--;
-        }
-
-        no->chaves[i + 1] = chave;
-        no->numChaves++;
-    } else {
-        // Encontra o filho que receberá a nova chave
-        while (i >= 0 && chave->chave < no->chaves[i]->chave) {
-            i--;
-        }
-        i++;
-
-        // Se o filho está cheio, divida-o
-        if (no->filhos[i]->numChaves == 2 * T - 1) {
-            divideFilho(no, i, no->filhos[i]);
-
-            // Depois de dividir, a nova chave está em no->chaves[i]
-            if (chave->chave > no->chaves[i]->chave) {
-                i++;
-            }
-        }
-
-        insereNaoCheio(no->filhos[i], chave);
-    }
-}
-
-// Insere uma chave na árvore B
-void insere(BTree *arvore, ArquivoIndex *chave) {
-    noArvore* raiz = arvore->raiz;
-
-    if (raiz->numChaves == 2 * T - 1) {
-        noArvore* novoNo = criaNo(false);
-        arvore->raiz = novoNo;
-        novoNo->filhos[0] = raiz;
-
-        divideFilho(novoNo, 0, raiz);
-
-        insereNaoCheio(novoNo, chave);
-    } else {
-        insereNaoCheio(raiz, chave);
-    }
-}
-
-// Busca uma chave na árvore B
-ArquivoIndex* busca(noArvore *no, int chave) {
+BTreeNode* busca(BTreeNode *no, const char *chave, int *indice) {
     int i = 0;
-    while (i < no->numChaves && chave > no->chaves[i]->chave) {
+    while (i < no->numChaves && strcmp(chave, no->chaves[i].chave) > 0) {
         i++;
     }
 
-    if (i < no->numChaves && chave == no->chaves[i]->chave) {
-        return no->chaves[i];
+    if (i < no->numChaves && strcmp(chave, no->chaves[i].chave) == 0) {
+        *indice = i;
+        return no;
     }
 
     if (no->folha) {
         return NULL;
+    }
+
+    return busca(no->filhos[i], chave, indice);
+}
+
+void divideNo(BTreeNode *pai, int i, BTreeNode *cheio, int ordem) {
+    BTreeNode *novoNo = criaNo(ordem, cheio->folha);
+    novoNo->numChaves = ordem - 1;
+
+    for (int j = 0; j < ordem - 1; j++) {
+        strcpy(novoNo->chaves[j].chave, cheio->chaves[j + ordem].chave);
+        novoNo->chaves[j].linha = cheio->chaves[j + ordem].linha;
+    }
+
+    if (!cheio->folha) {
+        for (int j = 0; j < ordem; j++) {
+            novoNo->filhos[j] = cheio->filhos[j + ordem];
+        }
+    }
+
+    cheio->numChaves = ordem - 1;
+
+    for (int j = pai->numChaves; j >= i + 1; j--) {
+        pai->filhos[j + 1] = pai->filhos[j];
+    }
+
+    pai->filhos[i + 1] = novoNo;
+
+    for (int j = pai->numChaves - 1; j >= i; j--) {
+        strcpy(pai->chaves[j + 1].chave, pai->chaves[j].chave);
+        pai->chaves[j + 1].linha = pai->chaves[j].linha;
+    }
+
+    strcpy(pai->chaves[i].chave, cheio->chaves[ordem - 1].chave);
+    pai->chaves[i].linha = cheio->chaves[ordem - 1].linha;
+    pai->numChaves++;
+}
+
+void insereNaoCheio(BTreeNode *no, ArquivoIndex *chave, int ordem) {
+    int i = no->numChaves - 1;
+
+    if (no->folha) {
+        while (i >= 0 && strcmp(chave->chave, no->chaves[i].chave) < 0) {
+            strcpy(no->chaves[i + 1].chave, no->chaves[i].chave);
+            no->chaves[i + 1].linha = no->chaves[i].linha;
+            i--;
+        }
+        strcpy(no->chaves[i + 1].chave, chave->chave);
+        no->chaves[i + 1].linha = chave->linha;
+        no->numChaves++;
     } else {
-        return busca(no->filhos[i], chave);
+        while (i >= 0 && strcmp(chave->chave, no->chaves[i].chave) < 0) {
+            i--;
+        }
+        i++;
+        if (no->filhos[i]->numChaves == 2 * ordem - 1) {
+            divideNo(no, i, no->filhos[i], ordem);
+            if (strcmp(chave->chave, no->chaves[i].chave) > 0) {
+                i++;
+            }
+        }
+        insereNaoCheio(no->filhos[i], chave, ordem);
     }
 }
 
-// Lê o arquivo e insere os registros na B-Tree
-void leArquivo(const char *nomeArquivo, BTree *arvore) {
+void insere(BTree *arvore, ArquivoIndex *chave) {
+    BTreeNode *raiz = arvore->raiz;
+
+    if (raiz->numChaves == 2 * arvore->ordem - 1) {
+        BTreeNode *novoNo = criaNo(arvore->ordem, 0);
+        novoNo->filhos[0] = raiz;
+        divideNo(novoNo, 0, raiz, arvore->ordem);
+        insereNaoCheio(novoNo, chave, arvore->ordem);
+        arvore->raiz = novoNo;
+    } else {
+        insereNaoCheio(raiz, chave, arvore->ordem);
+    }
+}
+
+void insereDoArquivo(BTree *arvore, const char *nomeArquivo) {
     FILE *arquivo = fopen(nomeArquivo, "r");
-    if (arquivo == NULL) {
-        perror("Erro ao abrir o arquivo");
-        exit(EXIT_FAILURE);
+    if (!arquivo) {
+        perror("Não foi possível abrir o arquivo");
+        return;
     }
 
-    int chave, linha;
-    while (fscanf(arquivo, "%d %d", &chave, &linha) == 2) {
-        ArquivoIndex *indice = (ArquivoIndex *)malloc(sizeof(ArquivoIndex));
-        if (indice == NULL) {
-            perror("Erro ao alocar memória");
-            exit(EXIT_FAILURE);
-        }
+    char linha[256];
+    int numeroLinha = 1;
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        // Extrai os 5 primeiros caracteres como a chave
+        char chaveStr[6];
+        strncpy(chaveStr, linha, 5);
+        chaveStr[5] = '\0'; // Adiciona o caractere nulo ao final
 
-        indice->chave = chave;
-        indice->linha = linha;
+        // Cria um ArquivoIndex com a chave e a linha
+        ArquivoIndex *novoIndex = (ArquivoIndex*)malloc(sizeof(ArquivoIndex));
+        strcpy(novoIndex->chave, chaveStr);
+        novoIndex->linha = numeroLinha;
 
-        insere(arvore, indice); // Inserir na B-Tree
+        // Insere na B-tree
+        insere(arvore, novoIndex);
 
-        free(indice);
+        numeroLinha++;
     }
 
     fclose(arquivo);
-    printf("Índice criado com sucesso a partir do arquivo %s.\n", nomeArquivo);
 }
 
-// Função para buscar uma chave utilizando a B-Tree
-int buscaNaBTree(BTree *arvore, const char *chave) {
-    int chaveInt = atoi(chave);  // Convertendo a chave para inteiro
-    ArquivoIndex *resultado = busca(arvore->raiz, chaveInt);
+void imprimeEspacos(int numEspacos) {
+    for (int i = 0; i < numEspacos; i++) {
+        printf(" ");
+    }
+}
 
-    return resultado != NULL ? 1 : 0;  // Retorna 1 se a chave foi encontrada, caso contrário, 0
+void imprimeChaves(BTreeNode *no) {
+    for (int i = 0; i < no->numChaves; i++) {
+        printf("%s ", no->chaves[i].chave);
+    }
+}
+
+void imprimeBTreeRecursivo(BTreeNode *no, int nivel, int ordem) {
+    if (no != NULL) {
+        int i;
+        for (i = 0; i < no->numChaves; i++) {
+            if (!no->folha) {
+                imprimeBTreeRecursivo(no->filhos[i], nivel + 1, ordem);
+            }
+            imprimeEspacos(nivel * 10);
+            printf("%s\n", no->chaves[i].chave);
+        }
+        if (!no->folha) {
+            imprimeBTreeRecursivo(no->filhos[i], nivel + 1, ordem);
+        }
+    }
+}
+
+void imprimeBTree(BTree *arvore) {
+    imprimeBTreeRecursivo(arvore->raiz, 0, arvore->ordem);
 }
