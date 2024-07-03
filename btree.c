@@ -3,9 +3,33 @@
 #include <stdbool.h>
 #include "btree.h"
 
+// Estrutura para armazenar o índice e a linha no arquivo
+typedef struct ArquivoIndex {
+    int chave;
+    int linha;
+} ArquivoIndex;
+
+// Estrutura de um nó da árvore B
+typedef struct noArvore {
+    ArquivoIndex* chaves[2 * T - 1];  // Array de ponteiros para ArquivoIndex
+    struct noArvore* filhos[2 * T];   // Array de ponteiros para filhos
+    int numChaves;                    // Número de chaves armazenadas no nó
+    bool folha;                       // Indica se o nó é uma folha
+} noArvore;
+
+// Estrutura da árvore B
+typedef struct BTree {
+    noArvore* raiz;
+} BTree;
+
 // Cria um novo nó da árvore B
 noArvore* criaNo(bool folha) {
     noArvore* no = (noArvore*)malloc(sizeof(noArvore));
+    if (no == NULL) {
+        perror("Erro ao alocar memória para novo nó");
+        exit(EXIT_FAILURE);
+    }
+
     no->folha = folha;
     no->numChaves = 0;
     for (int i = 0; i < 2 * T - 1; i++) {
@@ -20,6 +44,11 @@ noArvore* criaNo(bool folha) {
 // Cria uma nova árvore B
 BTree* criaBTree() {
     BTree* arvore = (BTree*)malloc(sizeof(BTree));
+    if (arvore == NULL) {
+        perror("Erro ao alocar memória para nova B-Tree");
+        exit(EXIT_FAILURE);
+    }
+
     arvore->raiz = criaNo(true);
     return arvore;
 }
@@ -128,37 +157,32 @@ ArquivoIndex* busca(noArvore *no, int chave) {
     }
 }
 
-// Lê todos os índices de um arquivo (simulação)
-void leTodosIndices(const char *nomeArquivo) {
+// Lê o arquivo e insere os registros na B-Tree
+void leArquivo(const char *nomeArquivo, BTree *arvore) {
     FILE *arquivo = fopen(nomeArquivo, "r");
     if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo.\n");
-        return;
+        perror("Erro ao abrir o arquivo");
+        exit(EXIT_FAILURE);
     }
 
-    char linha[256];
-    while (fgets(linha, sizeof(linha), arquivo)) {
-        printf("%s", linha);
+    int chave, linha;
+    while (fscanf(arquivo, "%d %d", &chave, &linha) == 2) {
+        ArquivoIndex *indice = (ArquivoIndex *)malloc(sizeof(ArquivoIndex));
+        if (indice == NULL) {
+            perror("Erro ao alocar memória");
+            exit(EXIT_FAILURE);
+        }
+
+        indice->chave = chave;
+        indice->linha = linha;
+
+        insere(arvore, indice); // Inserir na B-Tree
+
+        free(indice);
     }
 
     fclose(arquivo);
-}
-
-// Lê o arquivo e conta os registros (simulação)
-void leArquivo(const char *nomeArquivo, int *count) {
-    FILE *arquivo = fopen(nomeArquivo, "r");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo.\n");
-        return;
-    }
-
-    char linha[256];
-    *count = 0;
-    while (fgets(linha, sizeof(linha), arquivo)) {
-        (*count)++;
-    }
-
-    fclose(arquivo);
+    printf("Índice criado com sucesso a partir do arquivo %s.\n", nomeArquivo);
 }
 
 // Função para buscar uma chave utilizando a B-Tree
@@ -167,4 +191,4 @@ int buscaNaBTree(BTree *arvore, const char *chave) {
     ArquivoIndex *resultado = busca(arvore->raiz, chaveInt);
 
     return resultado != NULL ? 1 : 0;  // Retorna 1 se a chave foi encontrada, caso contrário, 0
-}   
+}

@@ -1,36 +1,59 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "btree.c"
+#include "btree.h"
 #include "busca_direta.h"
+#include "registro.h"
 
 #define CHAVE_TAMANHO 6     // Definição do tamanho máximo para a chave
+#define NUM_ATRIBUTOS 4     // Definição do número máximo de atributos no arquivo
 #define MAX_CHAVE 99999     // Definição do valor máximo para a chave
 #define NUM_REGISTRO 10000  // Definição do valor máximo de registros
 #define NUM_BUSCAS 30       // Definição do número de buscas realizadas no teste
 
-// Função para medir o tempo de execução de uma busca direta no arquivo
-double medirTempoBusca(int (*func)(const char *, const char *), const char *nomeArquivo, const char *chave) {
-    clock_t inicio, fim;
-    inicio = clock();
-    func(nomeArquivo, chave);
-    fim = clock();
-    return (double)(fim - inicio) / CLOCKS_PER_SEC;
+void geraRegistroAleatorio(Registro *registro, int chave) {
+    sprintf(registro->chave, "%05d", chave);  // Formata a chave com 5 dígitos
+    sprintf(registro->atributo2, "Atributo2_%d", rand() % 1000);
+    sprintf(registro->atributo3, "Atributo3_%d", rand() % 1000);
+    sprintf(registro->atributo4, "Atributo4_%d", rand() % 1000);
 }
 
-// Função para medir o tempo de execução de uma busca na B-Tree
-double medirTempoBuscaBTree(int (*func)(BTree *, const char *), BTree *arvore, const char *chave) {
-    clock_t inicio, fim;
-    inicio = clock();
-    func(arvore, chave);
-    fim = clock();
-    return (double)(fim - inicio) / CLOCKS_PER_SEC;
+void geraDadosAleatorios(const char *nomeArquivo, int numRegistros, int maxChave) {
+    FILE *arquivo = fopen(nomeArquivo, "w");
+    if (arquivo == NULL) {
+        printf("Erro ao criar o arquivo.\n");
+        return;
+    }
+
+    srand(time(NULL));
+    int *chavesUsadas = (int *)calloc(maxChave + 1, sizeof(int));
+    if (chavesUsadas == NULL) {
+        printf("Erro ao alocar memória.\n");
+        fclose(arquivo);
+        return;
+    }
+
+    for (int i = 0; i < numRegistros; i++) {
+        Registro registro;
+        int chave;
+
+        do {
+            chave = rand() % maxChave + 1;
+        } while (chavesUsadas[chave] == 1);
+
+        chavesUsadas[chave] = 1;
+        geraRegistroAleatorio(&registro, chave);
+
+        fprintf(arquivo, "%s,%s,%s,%s\n", registro.chave, registro.atributo2, registro.atributo3, registro.atributo4);
+    }
+
+    free(chavesUsadas);
+    fclose(arquivo);
+    printf("Arquivo gerado com sucesso: %s\n", nomeArquivo);
 }
 
 void criarIndice(BTree *arvore, const char *nomeArquivo) {
-    int count;
-    leArquivo(nomeArquivo, &count);
-    printf("Índice criado com sucesso.\n");
+    leArquivo(nomeArquivo, arvore);
 }
 
 void procurarElemento(BTree *arvore, const char *nomeArquivo) {
@@ -57,6 +80,24 @@ void procurarElemento(BTree *arvore, const char *nomeArquivo) {
 
 void removerRegistro(BTree *arvore) {
     printf("Remoção de registro ainda não implementada.\n");
+}
+
+// Função para medir o tempo de execução de uma busca direta no arquivo
+double medirTempoBusca(int (*func)(const char *, const char *), const char *nomeArquivo, const char *chave) {
+    clock_t inicio, fim;
+    inicio = clock();
+    func(nomeArquivo, chave);
+    fim = clock();
+    return (double)(fim - inicio) / CLOCKS_PER_SEC;
+}
+
+// Função para medir o tempo de execução de uma busca na B-Tree
+double medirTempoBuscaBTree(int (*func)(BTree *, const char *), BTree *arvore, const char *chave) {
+    clock_t inicio, fim;
+    inicio = clock();
+    func(arvore, chave);
+    fim = clock();
+    return (double)(fim - inicio) / CLOCKS_PER_SEC;
 }
 
 void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
@@ -137,7 +178,7 @@ int main() {
             default:
                 printf("Opção inválida. Tente novamente.\n");
         }
-    } while (opcao != 5);
+    } while (opcao != 6);
 
     // Liberar memória da B-Tree (implementar função de destruição conforme necessário)
     // destruirBTree(arvore);

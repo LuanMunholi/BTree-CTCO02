@@ -3,15 +3,9 @@
 #include <string.h>
 #include <time.h>
 #include "busca_direta.h"
+#include "registro.h"
 
 #define CHAVE_TAMANHO 6
-
-typedef struct {
-    char chave[CHAVE_TAMANHO];
-    char atributo2[20];
-    char atributo3[20];
-    char atributo4[20];
-} Registro;
 
 // Função para buscar uma chave diretamente no arquivo
 int buscaDiretaNoArquivo(const char *nomeArquivo, const char *chave) {
