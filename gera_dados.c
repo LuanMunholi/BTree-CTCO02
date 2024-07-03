@@ -1,9 +1,8 @@
+#include "gera_dados.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-#define NUM_REGISTROS 10000
-#define MAX_CHAVE 99999
 #define NUM_ATRIBUTOS 4
 
 typedef struct {
@@ -20,27 +19,27 @@ void geraRegistroAleatorio(Registro *registro, int chave) {
     sprintf(registro->atributo4, "Atributo4_%d", rand() % 1000);
 }
 
-int main() {
-    FILE *arquivo = fopen("dados.txt", "w");
+void geraDadosAleatorios(const char *nomeArquivo, int numRegistros, int maxChave) {
+    FILE *arquivo = fopen(nomeArquivo, "w");
     if (arquivo == NULL) {
         printf("Erro ao criar o arquivo.\n");
-        return 1;
+        return;
     }
 
     srand(time(NULL));
-    int *chavesUsadas = (int *)calloc(MAX_CHAVE + 1, sizeof(int));
+    int *chavesUsadas = (int *)calloc(maxChave + 1, sizeof(int));
     if (chavesUsadas == NULL) {
         printf("Erro ao alocar memória.\n");
         fclose(arquivo);
-        return 1;
+        return;
     }
 
-    for (int i = 0; i < NUM_REGISTROS; i++) {
+    for (int i = 0; i < numRegistros; i++) {
         Registro registro;
         int chave;
 
         do {
-            chave = rand() % MAX_CHAVE + 1;
+            chave = rand() % maxChave + 1;
         } while (chavesUsadas[chave] == 1);
 
         chavesUsadas[chave] = 1;
@@ -51,6 +50,5 @@ int main() {
 
     free(chavesUsadas);
     fclose(arquivo);
-    printf("Arquivo gerado com sucesso.\n");
-    return 0;
+    printf("Arquivo gerado com sucesso: %s\n", nomeArquivo);
 }

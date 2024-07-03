@@ -1,18 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "btree.h"
+#include "btree.c"
 #include "busca_direta.h"
 
-#define NUM_BUSCAS 30
-#define CHAVE_TAMANHO 6
-#define MAX_CHAVE 99999  // Definição do valor máximo para a chave
+#define CHAVE_TAMANHO 6     // Definição do tamanho máximo para a chave
+#define MAX_CHAVE 99999     // Definição do valor máximo para a chave
+#define NUM_REGISTRO 10000  // Definição do valor máximo de registros
+#define NUM_BUSCAS 30       // Definição do número de buscas realizadas no teste
 
-// Função para medir o tempo de execução
+// Função para medir o tempo de execução de uma busca direta no arquivo
 double medirTempoBusca(int (*func)(const char *, const char *), const char *nomeArquivo, const char *chave) {
     clock_t inicio, fim;
     inicio = clock();
     func(nomeArquivo, chave);
+    fim = clock();
+    return (double)(fim - inicio) / CLOCKS_PER_SEC;
+}
+
+// Função para medir o tempo de execução de uma busca na B-Tree
+double medirTempoBuscaBTree(int (*func)(BTree *, const char *), BTree *arvore, const char *chave) {
+    clock_t inicio, fim;
+    inicio = clock();
+    func(arvore, chave);
     fim = clock();
     return (double)(fim - inicio) / CLOCKS_PER_SEC;
 }
@@ -63,7 +73,7 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
         sprintf(chave, "%05d", rand() % MAX_CHAVE + 1);
 
         temposDireto[i] = medirTempoBusca(buscaDiretaNoArquivo, nomeArquivo, chave);
-        temposBTree[i] = medirTempoBusca((int (*)(const char *, const char *))buscaNaBTree, (const char *)arvore, chave);
+        temposBTree[i] = medirTempoBuscaBTree(buscaNaBTree, arvore, chave);
 
         somaDireto += temposDireto[i];
         somaBTree += temposBTree[i];
@@ -96,28 +106,32 @@ int main() {
     int opcao;
     do {
         printf("\nMenu\n");
-        printf("1. Criar índice\n");
-        printf("2. Procurar elementos\n");
-        printf("3. Remover registro\n");
-        printf("4. Realizar testes de buscas com medição de tempo\n");
-        printf("5. Sair\n");
+        printf("1. Gerar dados aleatórios\n");
+        printf("2. Criar índice\n");
+        printf("3. Procurar elementos\n");
+        printf("4. Remover registro\n");
+        printf("5. Realizar testes de buscas com medição de tempo\n");
+        printf("6. Sair\n");
         printf("Escolha uma opção: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
             case 1:
-                criarIndice(arvore, nomeArquivo);
+                geraDadosAleatorios(nomeArquivo, NUM_REGISTRO, MAX_CHAVE);
                 break;
             case 2:
-                procurarElemento(arvore, nomeArquivo);
+                criarIndice(arvore, nomeArquivo);
                 break;
             case 3:
-                removerRegistro(arvore);
+                procurarElemento(arvore, nomeArquivo);
                 break;
             case 4:
-                realizarBuscas(nomeArquivo, arvore);
+                removerRegistro(arvore);
                 break;
             case 5:
+                realizarBuscas(nomeArquivo, arvore);
+                break;
+            case 6:
                 printf("Saindo...\n");
                 break;
             default:
