@@ -17,9 +17,9 @@ void imprimeArvore(BTree *arvore){
 
 void geraRegistroAleatorio(Registro *registro, int chave) {
     sprintf(registro->chave, "%05d", chave);  // Formata a chave com 5 dígitos
-    sprintf(registro->atributo2, "Atributo2_%d", rand() % 1000);
-    sprintf(registro->atributo3, "Atributo3_%d", rand() % 1000);
-    sprintf(registro->atributo4, "Atributo4_%d", rand() % 1000);
+    sprintf(registro->atributo2, "Atributo2_%d", (rand() % (999 - 101 + 1) + 101));
+    sprintf(registro->atributo3, "Atributo3_%d", (rand() % (999 - 101 + 1) + 101));
+    sprintf(registro->atributo4, "Atributo4_%d", (rand() % (999 - 101 + 1) + 101));
 }
 
 void embaralhaArray(int *array, int tamanho) {
@@ -69,8 +69,10 @@ void procurarElemento(BTree *arvore, const char *nomeArquivo) {
     // Busca na B-Tree
     BTreeNode *encontradoBTree = buscaNaBtree(getRaiz(arvore), chave, &indice);
     if (encontradoBTree != NULL) {
-        printf("Chave encontrada na linha: %d\n", getLinha(encontradoBTree, indice));
+        int linha = getLinha(encontradoBTree, indice);
+        printf("Chave encontrada na linha: %d\n", linha);
         printf("Chave %s encontrada na B-Tree.\n", chave);
+        buscaNaLinha(nomeArquivo, linha);
     } else {
         printf("Chave %s não encontrada na B-Tree.\n", chave);
     }
@@ -115,7 +117,8 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
         
         // Medindo o tempo de execução de uma busca na B-Tree
         inicio = clock();
-        buscaNaBtree(getRaiz(arvore), chave, &indice);
+        BTreeNode *encontradoBTree = buscaNaBtree(getRaiz(arvore), chave, &indice);
+        buscaNaLinha(nomeArquivo, getLinha(encontradoBTree, indice));
         fim = clock();
         temposBTree[i] = (double)(fim - inicio) / CLOCKS_PER_SEC;
 
