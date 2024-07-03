@@ -173,3 +173,212 @@ void imprimeBTreeRecursivo(BTreeNode *no, int nivel, int ordem) {
 void imprimeBTree(BTree *arvore) {
     imprimeBTreeRecursivo(arvore->raiz, 0, arvore->ordem);
 }
+
+void removeChaveRecursivo(BTreeNode *no, const char *chave, int ordem) {
+    int indice = 0;
+    while (indice < no->numChaves && strcmp(chave, no->chaves[indice].chave) > 0) {
+        indice++;
+    }
+
+    if (indice < no->numChaves && strcmp(chave, no->chaves[indice].chave) == 0) {
+        // Caso 1: A chave está presente no nó folha
+        if (no->folha) {
+            // Move todas as chaves após a chave removida uma posição para trás
+            for (int i = indice; i < no->numChaves - 1; i++) {
+                strcpy(no->chaves[i].chave, no->chaves[i + 1].chave);
+                no->chaves[i].linha = no->chaves[i + 1].linha;
+            }
+            no->numChaves--;
+        } else {
+            // Caso 2: A chave está presente em um nó não folha
+            // Encontra o nó sucessor que contém a chave a ser removida
+            BTreeNode *sucessor = no->filhos[indice + 1];
+            while (!sucessor->folha) {
+                sucessor = sucessor->filhos[0];
+            }
+
+            // Troca a chave a ser removida pelo sucessor
+            strcpy(no->chaves[indice].chave, sucessor->chaves[0].chave);
+            no->chaves[indice].linha = sucessor->chaves[0].linha;
+
+            // Remove a chave do sucessor recursivamente
+            removeChaveRecursivo(sucessor, chave, ordem);
+        }
+    } else {
+        // Caso 3: A chave não está presente neste nó
+        if (no->folha) {
+            printf("Chave '%s' não encontrada na árvore.\n", chave);
+            return;
+        }
+
+        // Decide qual filho onde a chave deve estar
+        int filho = indice;
+        if (indice < no->numChaves && strcmp(chave, no->chaves[indice].chave) > 0) {
+            filho = indice + 1;
+        }
+
+        // Verifica se o filho precisa ser reestruturado antes de prosseguir
+        if (no->filhos[filho]->numChaves < ordem) {
+            // Caso 4a: Combinação do filho com o seu irmão esquerdo
+            if (filho > 0 && no->filhos[filho - 1]->numChaves >= ordem) {
+                BTreeNode *filhoEsq = no->filhos[filho - 1];
+                BTreeNode *filhoAtual = no->filhos[filho];
+
+                // Move todas as chaves do filhoAtual uma posição para a frente
+                for (int i = filhoAtual->numChaves - 1; i >= 0; i--) {
+                    strcpy(filhoAtual->chaves[i + 1].chave, filhoAtual->chaves[i].chave);
+                    filhoAtual->chaves[i + 1].linha = filhoAtual->chaves[i].linha;
+                }
+
+                // Move o último filho do filhoEsq como o primeiro filho do filhoAtual
+                if (!filhoAtual->folha) {
+                    for (int i = filhoAtual->numChaves; i >= 0; i--) {
+                        filhoAtual->filhos[i + 1] = filhoAtual->filhos[i];
+                    }
+                    filhoAtual->filhos[0] = filhoEsq->filhos[filhoEsq->numChaves];
+                }
+
+                // Move a chave do pai para o filhoAtual
+                strcpy(filhoAtual->chaves[0].chave, no->chaves[filho - 1].chave);
+                filhoAtual->chaves[0].linha = no->chaves[filho - 1].linha;
+
+                // Move a chave do filhoEsq para o pai
+                strcpy(no->chaves[filho - 1].chave, filhoEsq->chaves[filhoEsq->numChaves - 1].chave);
+                no->chaves[filho - 1].linha = filhoEsq->chaves[filhoEsq->numChaves - 1].linha;
+
+                // Atualiza o número de chaves
+                filhoAtual->numChaves++;
+                filhoEsq->numChaves--;
+            }
+            // Caso 4b: Combinação do filho com o seu irmão direito
+            else if (filho < no->numChaves && no->filhos[filho + 1]->numChaves >= ordem) {
+                BTreeNode *filhoAtual = no->filhos[filho];
+                BTreeNode *filhoDir = no->filhos[filho + 1];
+
+                // Move a chave do pai para o filhoAtual
+                strcpy(filhoAtual->chaves[filhoAtual->numChaves].chave, no->chaves[filho].chave);
+                filhoAtual->chaves[filhoAtual->numChaves].linha = no->chaves[filho].linha;
+                filhoAtual->numChaves++;
+
+                // Move a primeira chave do filhoDir para o pai
+                strcpy(no->chaves[filho].chave, filhoDir->chaves[0].chave);
+                no->chaves[filho].linha = filhoDir->chaves[0].linha;
+
+                // Move o primeiro filho do filhoDir para o último filho do filhoAtual
+                if (!filhoAtual->folha) {
+                    filhoAtual->filhos[filhoAtual->numChaves] = filhoDir->filhos[0];
+                }
+
+                // Move todas as chaves do filhoDir uma posição para a esquerda
+                for (int i = 1; i < filhoDir->numChaves; i++) {
+                    strcpy(filhoDir->chaves[i - 1].chave, filhoDir->chaves[i].chave);
+                    filhoDir->chaves[i - 1].linha = filhoDir->chaves[i].linha;
+                }
+
+                // Move todos os filhos do filhoDir uma posição para a esquerda
+                if (!filhoDir->folha) {
+                    for (int i = 1; i <= filhoDir->numChaves; i++) {
+                        filhoDir->filhos[i - 1] = filhoDir->filhos[i];
+                    }
+                }
+
+                // Atualiza o número de chaves
+                filhoDir->numChaves--;
+            }
+            // Caso 4c: Fusão dos filhos
+            else {
+                BTreeNode *filhoAtual = no->filhos[filho];
+
+                // Caso 4c.1: Fusão com o filho à direita
+                if (filho < no->numChaves) {
+                    BTreeNode *filhoDir = no->filhos[filho + 1];
+
+                    // Move a chave do pai para o filhoAtual
+                    strcpy(filhoAtual->chaves[filhoAtual->numChaves].chave, no->chaves[filho].chave);
+                    filhoAtual->chaves[filhoAtual->numChaves].linha = no->chaves[filho].linha;
+                    filhoAtual->numChaves++;
+
+                    // Move todas as chaves do filhoDir para o filhoAtual
+                    for (int i = 0; i < filhoDir->numChaves; i++) {
+                        strcpy(filhoAtual->chaves[filhoAtual->numChaves].chave, filhoDir->chaves[i].chave);
+                        filhoAtual->chaves[filhoAtual->numChaves].linha = filhoDir->chaves[i].linha;
+                        filhoAtual->numChaves++;
+                    }
+
+                    // Move todos os filhos do filhoDir para o filhoAtual
+                    if (!filhoDir->folha) {
+                        for (int i = 0; i <= filhoDir->numChaves; i++) {
+                            filhoAtual->filhos[filhoAtual->numChaves] = filhoDir->filhos[i];
+                            filhoAtual->numChaves++;
+                        }
+                    }
+
+                    // Libera o espaço ocupado pelo filhoDir
+                    free(filhoDir);
+
+                    // Move todas as chaves do pai uma posição para a esquerda
+                    for (int i = filho + 1; i < no->numChaves; i++) {
+                        strcpy(no->chaves[i - 1].chave, no->chaves[i].chave);
+                        no->chaves[i - 1].linha = no->chaves[i].linha;
+                    }
+
+                    // Move todos os filhos do pai uma posição para a esquerda
+                    for (int i = filho + 2; i <= no->numChaves; i++) {
+                        no->filhos[i - 1] = no->filhos[i];
+                    }
+
+                    // Atualiza o número de chaves do pai
+                    no->numChaves--;
+                }
+                // Caso 4c.2: Fusão com o filho à esquerda
+                else {
+                    BTreeNode *filhoEsq = no->filhos[filho - 1];
+
+                    // Move a chave do pai para o filhoEsq
+                    strcpy(filhoEsq->chaves[filhoEsq->numChaves].chave, no->chaves[filho - 1].chave);
+                    filhoEsq->chaves[filhoEsq->numChaves].linha = no->chaves[filho - 1].linha;
+                    filhoEsq->numChaves++;
+
+                    // Move todas as chaves do filhoAtual para o filhoEsq
+                    for (int i = 0; i < filhoAtual->numChaves; i++) {
+                        strcpy(filhoEsq->chaves[filhoEsq->numChaves].chave, filhoAtual->chaves[i].chave);
+                        filhoEsq->chaves[filhoEsq->numChaves].linha = filhoAtual->chaves[i].linha;
+                        filhoEsq->numChaves++;
+                    }
+
+                    // Move todos os filhos do filhoAtual para o filhoEsq
+                    if (!filhoAtual->folha) {
+                        for (int i = 0; i <= filhoAtual->numChaves; i++) {
+                            filhoEsq->filhos[filhoEsq->numChaves] = filhoAtual->filhos[i];
+                            filhoEsq->numChaves++;
+                        }
+                    }
+
+                    // Libera o espaço ocupado pelo filhoAtual
+                    free(filhoAtual);
+
+                    // Move todas as chaves do pai uma posição para a esquerda
+                    for (int i = filho; i < no->numChaves - 1; i++) {
+                        strcpy(no->chaves[i].chave, no->chaves[i + 1].chave);
+                        no->chaves[i].linha = no->chaves[i + 1].linha;
+                    }
+
+                    // Move todos os filhos do pai uma posição para a esquerda
+                    for (int i = filho + 1; i <= no->numChaves; i++) {
+                        no->filhos[i - 1] = no->filhos[i];
+                    }
+
+                    // Atualiza o número de chaves do pai
+                    no->numChaves--;
+                }
+            }
+        }
+
+        // Chama recursivamente a remoção na subárvore apropriada
+        removeChaveRecursivo(no->filhos[filho], chave, ordem);
+    }
+}
+
+void removeChave(BTree *arvore, const char *chave) {
+    removeChaveRecursivo(arvore->raiz, chave, arvore->ordem);
+}

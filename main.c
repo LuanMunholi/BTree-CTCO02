@@ -82,7 +82,11 @@ void procurarElemento(BTree *arvore, const char *nomeArquivo) {
 }
 
 void removerRegistro(BTree *arvore) {
-    printf("Remoção de registro ainda não implementada.\n");
+    char chave[CHAVE_TAMANHO];
+    printf("Digite a chave de 5 digitos a ser removida:");
+    scanf("%s", chave);
+    chave[CHAVE_TAMANHO-1] = '\0';
+    removeChave(arvore, chave);
 }
 
 void realizarBuscas(const char *nomeArquivo, BTree *arvore) {

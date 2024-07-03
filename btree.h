@@ -35,8 +35,14 @@ void insereDoArquivo(BTree *arvore, const char *nomeArquivo);
 void imprimeEspacos(int numEspacos);
 
 void imprimeChaves(BTreeNode *no);
+
 void imprimeBTreeRecursivo(BTreeNode *no, int nivel, int ordem);
 
 void imprimeBTree(BTree *arvore);
+
+
+void removeChaveRecursivo(BTreeNode *no, const char *chave, int ordem);
+
+void removeChave(BTree *arvore, const char *chave);
 
 #endif // TRAB_2_BTREE_H
