@@ -118,7 +118,10 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
         // Medindo o tempo de execução de uma busca na B-Tree
         inicio = clock();
         BTreeNode *encontradoBTree = buscaNaBtree(getRaiz(arvore), chave, &indice);
-        buscaNaLinha(nomeArquivo, getLinha(encontradoBTree, indice));
+        if (encontradoBTree != NULL) {
+            int linha = getLinha(encontradoBTree, indice);
+            buscaNaLinha(nomeArquivo, linha);
+        }
         fim = clock();
         temposBTree[i] = (double)(fim - inicio) / CLOCKS_PER_SEC;
 
