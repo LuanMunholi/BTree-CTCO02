@@ -21,7 +21,8 @@ typedef struct BTree {
 BTreeNode* criaNo(int ordem, int folha);
 
 BTree* criaBTree(int ordem);
-BTreeNode* busca(BTreeNode *no, const char *chave, int *indice);
+
+BTreeNode* buscaNaBtree(BTreeNode *no, const char *chave, int *indice);
 
 void divideNo(BTreeNode *pai, int i, BTreeNode *cheio, int ordem);
 

@@ -21,7 +21,7 @@ BTree* criaBTree(int ordem) {
     return novaArvore;
 }
 
-BTreeNode* busca(BTreeNode *no, const char *chave, int *indice) {
+BTreeNode* buscaNaBtree(BTreeNode *no, const char *chave, int *indice) {
     int i = 0;
     while (i < no->numChaves && strcmp(chave, no->chaves[i].chave) > 0) {
         i++;
@@ -36,7 +36,7 @@ BTreeNode* busca(BTreeNode *no, const char *chave, int *indice) {
         return NULL;
     }
 
-    return busca(no->filhos[i], chave, indice);
+    return buscaNaBtree(no->filhos[i], chave, indice);
 }
 
 void divideNo(BTreeNode *pai, int i, BTreeNode *cheio, int ordem) {

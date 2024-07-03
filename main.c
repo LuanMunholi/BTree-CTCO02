@@ -64,7 +64,7 @@ void procurarElemento(BTree *arvore, const char *nomeArquivo) {
     int indice;
 
     // Busca na B-Tree
-    BTreeNode *encontradoBTree = busca(arvore->raiz, chave, &indice);
+    BTreeNode *encontradoBTree = buscaNaBtree(arvore->raiz, chave, &indice);
     if (encontradoBTree != NULL) {
         printf("Chave encontrada na linha: %d\n", encontradoBTree->chaves[indice].linha);
         printf("Chave %s encontrada na B-Tree.\n", chave);
@@ -85,31 +85,14 @@ void removerRegistro(BTree *arvore) {
     printf("Remoção de registro ainda não implementada.\n");
 }
 
-// Função para medir o tempo de execução de uma busca direta no arquivo
-double medirTempoBusca(int (*func)(const char *, const char *), const char *nomeArquivo, const char *chave) {
-    clock_t inicio, fim;
-    inicio = clock();
-    func(nomeArquivo, chave);
-    fim = clock();
-    return (double)(fim - inicio) / CLOCKS_PER_SEC;
-}
-
-// Função para medir o tempo de execução de uma busca na B-Tree
-double medirTempoBuscaBTree(int (*func)(BTree *, const char *), BTree *arvore, const char *chave) {
-    int indice;
-    clock_t inicio, fim;
-    inicio = clock();
-    func(arvore->raiz, chave, &indice);
-    fim = clock();
-    return (double)(fim - inicio) / CLOCKS_PER_SEC;
-}
-
 void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
     double temposDireto[NUM_BUSCAS];
     double temposBTree[NUM_BUSCAS];
     double somaDireto = 0.0, somaBTree = 0.0;
     double maxDireto = 0.0, minDireto = 1.0;
     double maxBTree = 0.0, minBTree = 1.0;
+    int indice;
+    clock_t inicio, fim;
 
     srand(time(NULL));
 
@@ -117,8 +100,17 @@ void realizarBuscas(const char *nomeArquivo, BTree *arvore) {
         char chave[CHAVE_TAMANHO];
         sprintf(chave, "%05d", rand() % MAX_CHAVE + 1);
 
-        temposDireto[i] = medirTempoBusca(buscaDiretaNoArquivo, nomeArquivo, chave);
-        temposBTree[i] = medirTempoBuscaBTree(busca, arvore, chave);
+        // Função para medir o tempo de execução de uma busca direta no arquivo
+        inicio = clock();
+        buscaDiretaNoArquivo(nomeArquivo, chave);
+        fim = clock();
+        temposDireto[i] = (double)(fim - inicio) / CLOCKS_PER_SEC;
+        
+        // Medindo o tempo de execução de uma busca na B-Tree
+        inicio = clock();
+        buscaNaBtree(arvore->raiz, chave, &indice);
+        fim = clock();
+        temposBTree[i] = (double)(fim - inicio) / CLOCKS_PER_SEC;
 
         somaDireto += temposDireto[i];
         somaBTree += temposBTree[i];
